@@ -225,7 +225,9 @@ public class JSR356Endpoint extends Endpoint {
             }
 
             Map<String, Object> attributes = new ConcurrentHashMap<>();
-            attributes.putAll(request.localAttributes().unmodifiableMap());
+            AtmosphereRequest.LocalAttributes localAttributes = request.localAttributes();
+            if (localAttributes != null)
+                attributes.putAll(localAttributes.unmodifiableMap());
 
             request = new AtmosphereRequestImpl.Builder()
                     .requestURI(uri.getPath())
