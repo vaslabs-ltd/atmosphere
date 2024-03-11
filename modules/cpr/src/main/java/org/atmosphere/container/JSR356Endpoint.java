@@ -29,6 +29,7 @@ import org.atmosphere.websocket.WebSocketProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
@@ -42,11 +43,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -135,6 +132,7 @@ public class JSR356Endpoint extends Endpoint {
         if (servletPath == null) {
             servletPath = IOUtils.guestServletPath(framework.getAtmosphereConfig());
         }
+
 
         boolean recomputeForBackwardCompat = false;
         URI uri = session.getRequestURI();
@@ -225,9 +223,20 @@ public class JSR356Endpoint extends Endpoint {
             }
 
             Map<String, Object> attributes = new ConcurrentHashMap<>();
-            AtmosphereRequest.LocalAttributes localAttributes = request.localAttributes();
-            if (localAttributes != null)
-                attributes.putAll(localAttributes.unmodifiableMap());
+            Enumeration<String> requestAttributeNames = framework.getServletContext().getAttributeNames();
+            if (requestAttributeNames != null) {
+                ServletContext servletContext = framework.getServletContext();
+                while (requestAttributeNames.hasMoreElements()) {
+                    String nextAttributeName = requestAttributeNames.nextElement();
+                    if (nextAttributeName != null) {
+                        attributes.put(
+                            nextAttributeName,
+                            servletContext.getAttribute(nextAttributeName)
+                        );
+                    }
+                }
+            }
+
 
             request = new AtmosphereRequestImpl.Builder()
                     .requestURI(uri.getPath())
