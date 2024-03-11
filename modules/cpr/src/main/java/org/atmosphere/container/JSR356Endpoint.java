@@ -38,7 +38,6 @@ import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 import javax.websocket.server.HandshakeRequest;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.Buffer;
@@ -49,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.atmosphere.cpr.ApplicationConfig.ALLOW_QUERYSTRING_AS_REQUEST;
 
@@ -224,12 +224,16 @@ public class JSR356Endpoint extends Endpoint {
                     cookies.addAll(CookieUtil.ServerCookieDecoder.STRICT.decode(cookieHeader));
             }
 
+            Map<String, Object> attributes = new ConcurrentHashMap<>();
+            attributes.putAll(request.localAttributes().unmodifiableMap());
+
             request = new AtmosphereRequestImpl.Builder()
                     .requestURI(uri.getPath())
                     .requestURL(requestURL)
                     .headers(headers)
                     .cookies(cookies)
                     .session(handshakeSession)
+                    .attributes(attributes)
                     .servletPath(servletPath)
                     .contextPath(framework.getServletContext().getContextPath())
                     .pathInfo(pathInfo)
